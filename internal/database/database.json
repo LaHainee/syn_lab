@@ -1,0 +1,35 @@
+{
+  "0a676375-8fda-48ed-8b01-98f76cb0c290": {
+    "uuid": "0a676375-8fda-48ed-8b01-98f76cb0c290",
+    "surname": "Жихарев",
+    "name": "Семен",
+    "birthday": "2001-01-10T00:00:00Z",
+    "phone": 79151596781,
+    "email": "fake@gmail.com",
+    "links": {
+      "vk.com": "vk.com/vaershov"
+    }
+  },
+  "2d40d6d0-0b50-477b-b2ee-0587ab54e65f": {
+    "uuid": "2d40d6d0-0b50-477b-b2ee-0587ab54e65f",
+    "surname": "Ершов",
+    "name": "Виталий",
+    "birthday": "2001-01-10T00:00:00Z",
+    "phone": 79151596781,
+    "email": "fake@gmail.com",
+    "links": {
+      "vk.com": "vk.com/vaershov"
+    }
+  },
+  "e04b8a69-2b03-46f9-a900-1d77ea930be9": {
+    "uuid": "e04b8a69-2b03-46f9-a900-1d77ea930be9",
+    "surname": "Варин",
+    "name": "Дмитрий",
+    "birthday": "2001-01-10T00:00:00Z",
+    "phone": 79151596781,
+    "email": "fake@gmail.com",
+    "links": {
+      "vk.com": "vk.com/vaershov"
+    }
+  }
+}
