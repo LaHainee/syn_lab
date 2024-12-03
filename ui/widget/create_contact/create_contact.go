@@ -1,17 +1,23 @@
 package create_contact
 
 import (
-	"contacts/internal/model"
-	"contacts/internal/storage"
-	"contacts/internal/ui/dto"
-	wigetContactInfo "contacts/internal/ui/widget/contact_info"
-	contactsList "contacts/internal/ui/widget/contacts_list"
+	"time"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 	"github.com/google/uuid"
-	"time"
+
+	contactsDomain "contacts/internal/domain/contacts"
+	"contacts/internal/model"
+	"contacts/internal/storage"
+	"contacts/ui/dto"
+	wigetContactInfo "contacts/ui/widget/contact_info"
+	contactsList "contacts/ui/widget/contacts_list"
+	"contacts/util/pointer"
 )
+
+var allowedLinks = contactsDomain.AllowedLinks()
 
 type Builder struct {
 	// Объект приложения
@@ -34,24 +40,49 @@ func (b *Builder) Build() fyne.Window {
 	contactInfoWidgetRowsData := []dto.ContactInfoWidgetRowData{
 		{
 			Label: "Surname",
-			Value: "Тест",
+			Entry: dto.ContactInfoWidgetRowEntry{
+				Type:        dto.ContactWidgetRowTypeText,
+				Placeholder: pointer.To("Ершов"),
+			},
 		},
 		{
 			Label: "Name",
-			Value: "Тест",
+			Entry: dto.ContactInfoWidgetRowEntry{
+				Type:        dto.ContactWidgetRowTypeText,
+				Placeholder: pointer.To("Виталий"),
+			},
 		},
 		{
 			Label: "Birthday",
-			Value: "10.01.2001",
+			Entry: dto.ContactInfoWidgetRowEntry{
+				Type:        dto.ContactWidgetRowTypeDatePicker,
+				Placeholder: pointer.To("10.01.2001"),
+			},
 		},
 		{
 			Label: "Phone",
-			Value: "+7 (915) 159-67-81",
+			Entry: dto.ContactInfoWidgetRowEntry{
+				Type:        dto.ContactWidgetRowTypeText,
+				Placeholder: pointer.To("+7 (915) 159-67-81"),
+			},
 		},
 		{
 			Label: "Email",
-			Value: "vaershov@avito.ru",
+			Entry: dto.ContactInfoWidgetRowEntry{
+				Type:        dto.ContactWidgetRowTypeText,
+				Placeholder: pointer.To("vaershov@avito.ru"),
+			},
 		},
+	}
+
+	for _, allowedLink := range allowedLinks {
+		contactInfoWidgetRowsData = append(contactInfoWidgetRowsData, dto.ContactInfoWidgetRowData{
+			Label: string(allowedLink),
+			Entry: dto.ContactInfoWidgetRowEntry{
+				Type:        dto.ContactWidgetRowTypeText,
+				Placeholder: pointer.To("https://ya.ru"),
+			},
+		})
 	}
 
 	contactInfoWidgetBuilder := wigetContactInfo.NewBuilder(
@@ -76,6 +107,17 @@ func (b *Builder) Build() fyne.Window {
 	closeButton.Move(fyne.NewPos(contactInfoWidget.Size.Width-100-closeButton.Size().Width, contactInfoWidget.Size.Height))
 
 	confirmButton := widget.NewButton("OK", func() {
+		links := make(map[model.ContactLink]string)
+
+		for _, link := range allowedLinks {
+			contactWidgetRow, ok := contactInfoWidget.AssignedByLabel[string(link)]
+			if !ok {
+				continue
+			}
+
+			links[link] = contactWidgetRow.Entry.Text
+		}
+
 		birthday, err := time.Parse("02.01.2006", contactInfoWidget.AssignedByLabel["Birthday"].Entry.Text)
 		if err != nil {
 			panic(err)
@@ -93,6 +135,7 @@ func (b *Builder) Build() fyne.Window {
 			Birthday: birthday,
 			Phone:    phone,
 			Email:    contactInfoWidget.AssignedByLabel["Email"].Entry.Text,
+			Links:    links,
 		})
 		if err != nil {
 			panic(err)

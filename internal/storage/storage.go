@@ -1,13 +1,15 @@
 package storage
 
 import (
-	"contacts/internal/model"
 	"encoding/json"
 	"fmt"
-	"golang.org/x/exp/maps"
 	"os"
 	"slices"
 	"strings"
+
+	"golang.org/x/exp/maps"
+
+	"contacts/internal/model"
 )
 
 type Storage struct {
@@ -41,6 +43,23 @@ func (s *Storage) Search(request model.SearchRequest) ([]model.Contact, error) {
 	}
 
 	return maps.Values(contactsFiltered), nil
+}
+
+func (s *Storage) FetchByUUID(uuid string) (model.Contact, error) {
+	contactsDto, err := s.readFromJson()
+	if err != nil {
+		return model.Contact{}, err
+	}
+
+	for _, contactDto := range contactsDto {
+		if contactDto.UUID != uuid {
+			continue
+		}
+
+		return dtoToModel(contactDto), nil
+	}
+
+	return model.Contact{}, model.ErrNotFound
 }
 
 // Fetch – получить список всех контактов

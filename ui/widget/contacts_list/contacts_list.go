@@ -1,15 +1,17 @@
 package contacts_list
 
 import (
-	"contacts/internal/model"
-	"contacts/internal/ui/dto"
-	widgetContactInfo "contacts/internal/ui/widget/contact_info"
-	"fmt"
+	"strings"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
-	"strconv"
-	"strings"
+
+	"contacts/internal/model"
+	"contacts/ui/dto"
+	"contacts/ui/presenter/phone"
+	widgetContactInfo "contacts/ui/widget/contact_info"
+	"contacts/util/pointer"
 )
 
 type Builder struct {
@@ -22,6 +24,9 @@ type Builder struct {
 	contactsListBox *container.Scroll
 	searchInputBox  *fyne.Container
 	searchLabelBox  *fyne.Container
+
+	// Выбранный в данный момент контакте
+	selectedContact *model.Contact
 }
 
 func NewBuilder(contacts []model.Contact, appBox *fyne.Container) *Builder {
@@ -50,32 +55,52 @@ func (b *Builder) Build() {
 	contactsList.OnSelected = func(id int) {
 		contact := filtered[id]
 
+		b.selectedContact = &contact
+
 		contactsWidgetRowsData := []dto.ContactInfoWidgetRowData{
 			{
 				Label: "Surname",
-				Value: contact.Surname,
+				Entry: dto.ContactInfoWidgetRowEntry{
+					Value: &contact.Surname,
+					Type:  dto.ContactWidgetRowTypeText,
+				},
 			},
 			{
 				Label: "Name",
-				Value: contact.Name,
+				Entry: dto.ContactInfoWidgetRowEntry{
+					Value: &contact.Name,
+					Type:  dto.ContactWidgetRowTypeText,
+				},
 			},
 			{
 				Label: "Birthday",
-				Value: contact.Birthday.Format("02.01.2006"),
+				Entry: dto.ContactInfoWidgetRowEntry{
+					Value: pointer.To(contact.Birthday.Format("02.01.2006")),
+					Type:  dto.ContactWidgetRowTypeDatePicker,
+				},
 			},
 			{
 				Label: "Phone",
-				Value: presentPhone(contact.Phone.Number()),
+				Entry: dto.ContactInfoWidgetRowEntry{
+					Value: pointer.To(phone.Present(contact.Phone.Number())),
+					Type:  dto.ContactWidgetRowTypeText,
+				},
 			},
 			{
 				Label: "Email",
-				Value: contact.Email,
+				Entry: dto.ContactInfoWidgetRowEntry{
+					Value: &contact.Email,
+					Type:  dto.ContactWidgetRowTypeText,
+				},
 			},
 		}
 		for link, value := range contact.Links {
 			contactsWidgetRowsData = append(contactsWidgetRowsData, dto.ContactInfoWidgetRowData{
 				Label: string(link),
-				Value: value,
+				Entry: dto.ContactInfoWidgetRowEntry{
+					Value: &value,
+					Type:  dto.ContactWidgetRowTypeText,
+				},
 			})
 		}
 
@@ -137,6 +162,14 @@ func (b *Builder) Build() {
 	return
 }
 
+func (b *Builder) SelectedContactUUID() *string {
+	if b.selectedContact == nil {
+		return nil
+	}
+
+	return &b.selectedContact.UUID
+}
+
 func (b *Builder) Refresh(contacts []model.Contact) {
 	b.contacts = contacts
 
@@ -147,21 +180,4 @@ func (b *Builder) Refresh(contacts []model.Contact) {
 	b.Build()
 
 	b.appBox.Refresh()
-}
-
-func presentPhone(phone int64) string {
-	phoneStr := strconv.FormatInt(phone, 10)
-
-	if len(phoneStr) != 11 {
-		return "Неверный номер телефона"
-	}
-
-	formatted := fmt.Sprintf("+7 (%s) %s-%s-%s",
-		phoneStr[1:4],  // 915
-		phoneStr[4:7],  // 159
-		phoneStr[7:9],  // 67
-		phoneStr[9:11], // 81
-	)
-
-	return formatted
 }

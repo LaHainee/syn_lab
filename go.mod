@@ -8,6 +8,11 @@ require (
 )
 
 require (
+	fyne.io/x/fyne v0.0.0-20240803204126-8b5b5bfe65ef
+	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646 // indirect
+)
+
+require (
 	fyne.io/fyne/v2 v2.5.2
 	fyne.io/systray v1.11.0 // indirect
 	github.com/BurntSushi/toml v1.4.0 // indirect

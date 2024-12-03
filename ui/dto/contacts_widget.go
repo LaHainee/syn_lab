@@ -5,9 +5,22 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+type ContactWidgetRowType string
+
+const (
+	ContactWidgetRowTypeDatePicker = "date_picker"
+	ContactWidgetRowTypeText       = "text"
+)
+
 type ContactInfoWidgetRowData struct {
 	Label string
-	Value string
+	Entry ContactInfoWidgetRowEntry
+}
+
+type ContactInfoWidgetRowEntry struct {
+	Value       *string
+	Placeholder *string
+	Type        ContactWidgetRowType
 }
 
 type ContactInfoWidget struct {
