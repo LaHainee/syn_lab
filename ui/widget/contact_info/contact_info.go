@@ -174,12 +174,22 @@ func (w *Builder) Build(rowsData []dto.ContactInfoWidgetRowData) dto.ContactInfo
 func (w *Builder) buildEntry(entryDto dto.ContactInfoWidgetRowEntry) *widget.Entry {
 	entry := widget.NewEntry()
 
+	// Подставляем текст в форму
 	if entryDto.Value != nil {
 		entry.SetText(*entryDto.Value)
 	}
 
+	// Шаблон для заполнения
 	if entryDto.Placeholder != nil {
 		entry.SetPlaceHolder(*entryDto.Placeholder)
+	}
+
+	// Для опции DisableEdit запрещаем редактировать форму
+	if entryDto.DisableEdit {
+		text := entry.Text
+		entry.OnChanged = func(_ string) {
+			entry.SetText(text)
+		}
 	}
 
 	return entry

@@ -1,6 +1,7 @@
 package contacts_list
 
 import (
+	"sort"
 	"strings"
 
 	"fyne.io/fyne/v2"
@@ -39,6 +40,8 @@ func NewBuilder(contacts []model.Contact, appBox *fyne.Container) *Builder {
 func (b *Builder) Build() {
 	filtered := b.contacts
 
+	sort.Sort(BySurname(filtered))
+
 	// Список контактов
 	contactsList := widget.NewList(
 		func() int {
@@ -61,36 +64,41 @@ func (b *Builder) Build() {
 			{
 				Label: "Surname",
 				Entry: dto.ContactInfoWidgetRowEntry{
-					Value: &contact.Surname,
-					Type:  dto.ContactWidgetRowTypeText,
+					Value:       &contact.Surname,
+					Type:        dto.ContactWidgetRowTypeText,
+					DisableEdit: true,
 				},
 			},
 			{
 				Label: "Name",
 				Entry: dto.ContactInfoWidgetRowEntry{
-					Value: &contact.Name,
-					Type:  dto.ContactWidgetRowTypeText,
+					Value:       &contact.Name,
+					Type:        dto.ContactWidgetRowTypeText,
+					DisableEdit: true,
 				},
 			},
 			{
 				Label: "Birthday",
 				Entry: dto.ContactInfoWidgetRowEntry{
-					Value: pointer.To(contact.Birthday.Format("02.01.2006")),
-					Type:  dto.ContactWidgetRowTypeDatePicker,
+					Value:       pointer.To(contact.Birthday.Format("02.01.2006")),
+					Type:        dto.ContactWidgetRowTypeDatePicker,
+					DisableEdit: true,
 				},
 			},
 			{
 				Label: "Phone",
 				Entry: dto.ContactInfoWidgetRowEntry{
-					Value: pointer.To(phone.Present(contact.Phone.Number())),
-					Type:  dto.ContactWidgetRowTypeText,
+					Value:       pointer.To(phone.Present(contact.Phone.Number())),
+					Type:        dto.ContactWidgetRowTypeText,
+					DisableEdit: true,
 				},
 			},
 			{
 				Label: "Email",
 				Entry: dto.ContactInfoWidgetRowEntry{
-					Value: &contact.Email,
-					Type:  dto.ContactWidgetRowTypeText,
+					Value:       &contact.Email,
+					Type:        dto.ContactWidgetRowTypeText,
+					DisableEdit: true,
 				},
 			},
 		}
@@ -98,8 +106,9 @@ func (b *Builder) Build() {
 			contactsWidgetRowsData = append(contactsWidgetRowsData, dto.ContactInfoWidgetRowData{
 				Label: string(link),
 				Entry: dto.ContactInfoWidgetRowEntry{
-					Value: &value,
-					Type:  dto.ContactWidgetRowTypeText,
+					Value:       &value,
+					Type:        dto.ContactWidgetRowTypeText,
+					DisableEdit: true,
 				},
 			})
 		}
@@ -143,6 +152,8 @@ func (b *Builder) Build() {
 
 		contactsList.Refresh()
 	}
+
+	sort.Sort(BySurname(filtered))
 
 	searchInputBox := container.NewVBox(searchInput)
 	searchInputBox.Resize(fyne.NewSize(300, 40))

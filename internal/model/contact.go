@@ -15,3 +15,13 @@ type Contact struct {
 	Email    string
 	Links    map[ContactLink]string
 }
+
+type ContactForCreate struct {
+	UUID     *string
+	Name     string
+	Surname  string
+	Birthday string
+	Phone    string
+	Email    string
+	Links    map[ContactLink]string
+}

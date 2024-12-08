@@ -1,127 +1,169 @@
 package main
 
 import (
+	"fmt"
+	"strconv"
+
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/widget"
+
+	contactValidator "contacts/internal/domain/validate/contact"
+	"contacts/internal/handler/create"
+	"contacts/internal/handler/update"
 	"contacts/internal/model"
 	"contacts/internal/storage"
-	"github.com/google/uuid"
-	"time"
+	widgetContactsList "contacts/ui/widget/contacts_list"
+	widgetCreateContact "contacts/ui/widget/create_contact"
+	widgetDeleteContact "contacts/ui/widget/delete_contact"
+	widgetUpdateContact "contacts/ui/widget/update_contact"
 )
 
-var (
-	birthday = time.Date(2001, 1, 10, 0, 0, 0, 0, time.UTC)
-	email    = "fake@gmail.com"
-	links    = map[model.ContactLink]string{
-		model.ContactLinkVk: "vk.com/vaershov",
-	}
+const (
+	windowWidth  = 1920
+	windowHeight = 1080
 )
 
 func main() {
-	phone, err := model.NewPhone("+7 (915) 159-67-81")
+	// Конфигурация приложения
+	contactStorage := storage.New("internal/database/database.json")
+
+	validator := contactValidator.New()
+
+	createContactHandler := create.NewHandler(contactStorage, validator)
+	updateContactHandler := update.NewHandler(contactStorage, validator)
+
+	// Создание нового приложения
+	myApp := app.New()
+	myApp.Settings().SetTheme(theme.LightTheme())
+	myWindow := myApp.NewWindow("Contacts App")
+	myWindow.Resize(fyne.NewSize(windowWidth, windowHeight))
+	appBox := container.NewWithoutLayout()
+
+	contacts, err := contactStorage.Fetch()
 	if err != nil {
 		panic(err)
 	}
 
-	storageInstance := storage.New("internal/database/database.json")
-
-	err = create(storageInstance, phone)
+	// <! Иконки для кнопок
+	createContactIcon, err := fyne.LoadResourceFromPath("./ui/icons/plus.png")
 	if err != nil {
 		panic(err)
 	}
 
-	//err := update(storageInstance)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//
-	//err := deleteContact(storageInstance)
-	//if err != nil {
-	//	panic(err)
-	//}
+	editContactIcon, err := fyne.LoadResourceFromPath("./ui/icons/edit.png")
+	if err != nil {
+		panic(err)
+	}
 
-	//contacts, err := fetch(storageInstance)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//
-	//for _, contact := range contacts {
-	//	fmt.Println(contact)
-	//}
+	deleteContactIcon, err := fyne.LoadResourceFromPath("./ui/icons/minus.png")
+	if err != nil {
+		panic(err)
+	}
+	// Иконки для кнопок !>
 
-	//contacts, err := search(storageInstance, "виталий ершов")
-	//if err != nil {
-	//	panic(err)
-	//}
-	//
-	//for _, contact := range contacts {
-	//	fmt.Println(contact)
-	//}
+	contactsListWidgetBuilder := widgetContactsList.NewBuilder(contacts, appBox)
+	contactsListWidgetBuilder.Build()
+
+	// Компонент отвечающий за создание контакта
+	createContactWindowBuilder := widgetCreateContact.NewBuilder(myApp, contactsListWidgetBuilder, createContactHandler, contactStorage)
+	createContactButton := widget.NewButtonWithIcon("", createContactIcon, func() {
+		createContactWindow := createContactWindowBuilder.Build()
+		createContactWindow.Show()
+	})
+	createContactButton.Resize(fyne.NewSize(30, 30))
+	createContactButton.Move(fyne.NewPos(50, 800))
+
+	// Компонент отвечающий за изменение контакта
+	updateContactWindowBuilder := widgetUpdateContact.NewBuilder(myApp, contactsListWidgetBuilder, updateContactHandler, contactStorage)
+	updateContactButton := widget.NewButtonWithIcon("", editContactIcon, func() {
+		selectedContactUUID := contactsListWidgetBuilder.SelectedContactUUID()
+		if selectedContactUUID == nil {
+			return
+		}
+
+		updateContactWindow := updateContactWindowBuilder.Build(*selectedContactUUID)
+		updateContactWindow.Show()
+	})
+	updateContactButton.Resize(fyne.NewSize(30, 30))
+	updateContactButton.Move(fyne.NewPos(85, 800))
+
+	// Компонент отвечающий за удаление контакта
+	deleteContactWindowBuilder := widgetDeleteContact.NewBuilder(myApp, contactStorage, contactsListWidgetBuilder)
+	deleteContactButton := widget.NewButtonWithIcon("", deleteContactIcon, func() {
+		selectedContactUUID := contactsListWidgetBuilder.SelectedContactUUID()
+		if selectedContactUUID == nil {
+			return
+		}
+
+		deleteContactWindow := deleteContactWindowBuilder.Build(*selectedContactUUID)
+		deleteContactWindow.Show()
+	})
+	deleteContactButton.Resize(fyne.NewSize(30, 30))
+	deleteContactButton.Move(fyne.NewPos(120, 800))
+
+	appBox.Add(createContactButton)
+	appBox.Add(updateContactButton)
+	appBox.Add(deleteContactButton)
+
+	myWindow.SetContent(appBox)
+
+	// Показать окно и запустить приложение
+	myWindow.ShowAndRun()
 }
 
-func search(storageInstance *storage.Storage, query string) ([]model.Contact, error) {
-	return storageInstance.Search(model.SearchRequest{Query: query})
+type contactInfo struct {
+	Label string
+	Value string
 }
 
-func fetch(storageInstance *storage.Storage) ([]model.Contact, error) {
-	return storageInstance.Fetch()
+type createContactField struct {
+	Label     *widget.Label
+	Entry     *widget.Entry
+	ApplyFunc func(contact *model.Contact)
 }
 
-func deleteContact(storageInstance *storage.Storage) error {
-	return storageInstance.Delete("695bb135-63ab-4b2a-bf3c-82339d395e90")
+func prepareContactsInfo(infos []contactInfo, posByY, offsetByY, labelPosByX, entryPosByX float32) *fyne.Container {
+	box := container.NewWithoutLayout()
+
+	for _, info := range infos {
+		label := widget.NewLabel(info.Label + ":")
+		label.Alignment = fyne.TextAlignTrailing
+
+		labelBox := container.NewVBox(label)
+		labelBox.Resize(fyne.NewSize(200, 30))
+		labelBox.Move(fyne.NewPos(labelPosByX, posByY))
+
+		entry := widget.NewEntry()
+		entry.SetText(info.Value)
+		entryBox := container.NewVBox(entry)
+		entryBox.Resize(fyne.NewSize(200, 30))
+		entryBox.Move(fyne.NewPos(entryPosByX, posByY))
+
+		box.Add(labelBox)
+		box.Add(entryBox)
+
+		posByY += offsetByY
+	}
+
+	return box
 }
 
-func update(storageInstance *storage.Storage, phone model.Phone) error {
-	return storageInstance.Update(
-		model.Contact{
-			UUID:     "695bb135-63ab-4b2a-bf3c-82339d395e90",
-			Surname:  "Обновленный",
-			Name:     "Семен",
-			Birthday: birthday,
-			Phone:    phone,
-			Email:    email,
-			Links:    links,
-		},
+func formatPhoneNumber(phone int64) string {
+	phoneStr := strconv.FormatInt(phone, 10)
+
+	if len(phoneStr) != 11 {
+		return "Неверный номер телефона"
+	}
+
+	formatted := fmt.Sprintf("+7 (%s) %s-%s-%s",
+		phoneStr[1:4],  // 915
+		phoneStr[4:7],  // 159
+		phoneStr[7:9],  // 67
+		phoneStr[9:11], // 81
 	)
-}
 
-func create(storageInstance *storage.Storage, phone model.Phone) error {
-	err := storageInstance.Create(model.Contact{
-		UUID:     uuid.NewString(),
-		Surname:  "Жихарев",
-		Name:     "Семен",
-		Birthday: birthday,
-		Phone:    phone,
-		Email:    email,
-		Links:    links,
-	})
-	if err != nil {
-		return err
-	}
-
-	err = storageInstance.Create(model.Contact{
-		UUID:     uuid.NewString(),
-		Surname:  "Ершов",
-		Name:     "Виталий",
-		Birthday: birthday,
-		Phone:    phone,
-		Email:    email,
-		Links:    links,
-	})
-	if err != nil {
-		return err
-	}
-
-	err = storageInstance.Create(model.Contact{
-		UUID:     uuid.NewString(),
-		Surname:  "Варин",
-		Name:     "Дмитрий",
-		Birthday: birthday,
-		Phone:    phone,
-		Email:    email,
-		Links:    links,
-	})
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return formatted
 }

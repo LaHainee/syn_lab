@@ -21,6 +21,7 @@ type ContactInfoWidgetRowEntry struct {
 	Value       *string
 	Placeholder *string
 	Type        ContactWidgetRowType
+	DisableEdit bool
 }
 
 type ContactInfoWidget struct {
