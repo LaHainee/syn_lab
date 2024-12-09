@@ -12,7 +12,6 @@ import (
 	"contacts/internal/model"
 	"contacts/ui/dto"
 	wigetContactInfo "contacts/ui/widget/contact_info"
-	contactsList "contacts/ui/widget/contacts_list"
 	errorWidget "contacts/ui/widget/error"
 	"contacts/util/pointer"
 )
@@ -20,27 +19,20 @@ import (
 var allowedLinks = contactsDomain.AllowedLinks()
 
 type Builder struct {
-	// Объект приложения
-	app fyne.App
-
-	// Компонент, который отвечает за список контактов. Нужен для обновления списка после создания
-	contactListBuilder *contactsList.Builder
-
-	handler handler
-	storage storage
+	app           app
+	contactList   contactList
+	createHandler createHandler
 }
 
 func NewBuilder(
-	app fyne.App,
-	contactsListBuilder *contactsList.Builder,
-	handler handler,
-	storage storage,
+	app app,
+	contactList contactList,
+	createHandler createHandler,
 ) *Builder {
 	return &Builder{
-		app:                app,
-		contactListBuilder: contactsListBuilder,
-		handler:            handler,
-		storage:            storage,
+		app:           app,
+		contactList:   contactList,
+		createHandler: createHandler,
 	}
 }
 
@@ -139,7 +131,7 @@ func (b *Builder) Build() fyne.Window {
 			links[link] = contactWidgetRow.Entry.Text
 		}
 
-		fieldMsgs, err := b.handler.Create(context.Background(), model.ContactForCreate{
+		fieldMsgs, err := b.createHandler.Create(context.Background(), model.ContactForCreate{
 			Surname:  contactInfoWidget.AssignedByLabel["Surname"].Entry.Text,
 			Name:     contactInfoWidget.AssignedByLabel["Name"].Entry.Text,
 			Birthday: contactInfoWidget.AssignedByLabel["Birthday"].Entry.Text,
@@ -156,12 +148,7 @@ func (b *Builder) Build() fyne.Window {
 			panic(err)
 		}
 
-		contacts, err := b.storage.Fetch()
-		if err != nil {
-			panic(err)
-		}
-
-		b.contactListBuilder.Refresh(contacts)
+		b.contactList.Refresh()
 
 		window.Close()
 	})

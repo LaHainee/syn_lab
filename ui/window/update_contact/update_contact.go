@@ -12,38 +12,33 @@ import (
 	"contacts/ui/dto"
 	"contacts/ui/presenter/phone"
 	wigetContactInfo "contacts/ui/widget/contact_info"
-	contactsList "contacts/ui/widget/contacts_list"
 	errorWidget "contacts/ui/widget/error"
 	"contacts/util/pointer"
 )
 
 type Builder struct {
-	// Объект приложения
-	app fyne.App
-
-	// Компонент, который отвечает за список контактов. Нужен для обновления списка после создания
-	contactListBuilder *contactsList.Builder
-
-	handler handler
-	storage storage
+	app           app
+	contactList   contactList
+	updateHandler updateHandler
+	fetchHandler  fetchHandler
 }
 
 func NewBuilder(
-	app fyne.App,
-	contactsListBuilder *contactsList.Builder,
-	handler handler,
-	storage storage,
+	app app,
+	contactList contactList,
+	updateHandler updateHandler,
+	fetchHandler fetchHandler,
 ) *Builder {
 	return &Builder{
-		app:                app,
-		contactListBuilder: contactsListBuilder,
-		handler:            handler,
-		storage:            storage,
+		app:           app,
+		contactList:   contactList,
+		updateHandler: updateHandler,
+		fetchHandler:  fetchHandler,
 	}
 }
 
 func (b *Builder) Build(contactUuid string) fyne.Window {
-	contact, err := b.storage.FetchByUUID(contactUuid)
+	contact, err := b.fetchHandler.FetchByUuid(context.Background(), contactUuid)
 	if err != nil {
 		panic(err)
 	}
@@ -142,7 +137,7 @@ func (b *Builder) Build(contactUuid string) fyne.Window {
 			links[link] = contactWidgetRow.Entry.Text
 		}
 
-		fieldMsgs, err := b.handler.Update(context.Background(), model.ContactForCreate{
+		fieldMsgs, err := b.updateHandler.Update(context.Background(), model.ContactForCreate{
 			UUID:     &contact.UUID,
 			Surname:  contactInfoWidget.AssignedByLabel["Surname"].Entry.Text,
 			Name:     contactInfoWidget.AssignedByLabel["Name"].Entry.Text,
@@ -160,12 +155,7 @@ func (b *Builder) Build(contactUuid string) fyne.Window {
 			panic(err)
 		}
 
-		contacts, err := b.storage.Fetch()
-		if err != nil {
-			panic(err)
-		}
-
-		b.contactListBuilder.Refresh(contacts)
+		b.contactList.Refresh()
 
 		window.Close()
 	})

@@ -8,9 +8,13 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	contactValidator "contacts/internal/domain/validate/contact"
-	"contacts/internal/handler/create"
-	"contacts/internal/handler/update"
+	createContact "contacts/internal/handler/create"
+	deleteContact "contacts/internal/handler/delete"
+	fetchContact "contacts/internal/handler/fetch"
+	searchContact "contacts/internal/handler/search"
+	updateContact "contacts/internal/handler/update"
 	"contacts/internal/storage"
+	"contacts/internal/storage/database"
 	"contacts/ui/menu"
 	widgetBirthday "contacts/ui/widget/birthday"
 	widgetContactsList "contacts/ui/widget/contacts_list"
@@ -27,12 +31,15 @@ var (
 
 func main() {
 	// Конфигурация приложения
-	contactStorage := storage.New("internal/database/database.json")
+	contactStorage := storage.New(database.New("internal/database/database.json"))
 
 	validator := contactValidator.New()
 
-	createContactHandler := create.NewHandler(contactStorage, validator)
-	updateContactHandler := update.NewHandler(contactStorage, validator)
+	createContactHandler := createContact.NewHandler(contactStorage, validator)
+	updateContactHandler := updateContact.NewHandler(contactStorage, validator)
+	deleteContactHandler := deleteContact.NewHandler(contactStorage)
+	fetchContactHandler := fetchContact.NewHandler(contactStorage)
+	searchContactHandler := searchContact.NewHandler(contactStorage)
 
 	// Создание нового приложения
 	myApp := app.New()
@@ -64,7 +71,7 @@ func main() {
 	}
 	// Иконки для кнопок !>
 
-	contactsListWidgetBuilder := widgetContactsList.NewBuilder(contacts, appBox)
+	contactsListWidgetBuilder := widgetContactsList.NewBuilder(fetchContactHandler, searchContactHandler, appBox)
 	contactsListWidgetBuilder.Build()
 
 	contactListPos := contactsListWidgetBuilder.ContactListBoxPos()
@@ -73,7 +80,11 @@ func main() {
 	const horizontalSpacingBetweenButtons = 5
 
 	// Компонент отвечающий за создание контакта
-	createContactWindowBuilder := windowCreateContact.NewBuilder(myApp, contactsListWidgetBuilder, createContactHandler, contactStorage)
+	createContactWindowBuilder := windowCreateContact.NewBuilder(
+		myApp,
+		contactsListWidgetBuilder,
+		createContactHandler,
+	)
 	createContactButton := widget.NewButtonWithIcon("", createContactIcon, func() {
 		createContactWindow := createContactWindowBuilder.Build()
 		createContactWindow.Show()
@@ -82,7 +93,12 @@ func main() {
 	createContactButton.Move(fyne.NewPos(contactListPos.X, contactListPos.Y+contactListSize.Height+20))
 
 	// Компонент отвечающий за изменение контакта
-	updateContactWindowBuilder := windowUpdateContact.NewBuilder(myApp, contactsListWidgetBuilder, updateContactHandler, contactStorage)
+	updateContactWindowBuilder := windowUpdateContact.NewBuilder(
+		myApp,
+		contactsListWidgetBuilder,
+		updateContactHandler,
+		fetchContactHandler,
+	)
 	updateContactButton := widget.NewButtonWithIcon("", editContactIcon, func() {
 		selectedContactUUID := contactsListWidgetBuilder.SelectedContactUUID()
 		if selectedContactUUID == nil {
@@ -100,7 +116,12 @@ func main() {
 		))
 
 	// Компонент отвечающий за удаление контакта
-	deleteContactWindowBuilder := windowDeleteContact.NewBuilder(myApp, contactStorage, contactsListWidgetBuilder)
+	deleteContactWindowBuilder := windowDeleteContact.NewBuilder(
+		myApp,
+		deleteContactHandler,
+		fetchContactHandler,
+		contactsListWidgetBuilder,
+	)
 	deleteContactButton := widget.NewButtonWithIcon("", deleteContactIcon, func() {
 		selectedContactUUID := contactsListWidgetBuilder.SelectedContactUUID()
 		if selectedContactUUID == nil {

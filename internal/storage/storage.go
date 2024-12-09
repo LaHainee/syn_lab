@@ -1,10 +1,6 @@
 package storage
 
 import (
-	"encoding/json"
-	"fmt"
-	"os"
-	"slices"
 	"strings"
 
 	"golang.org/x/exp/maps"
@@ -13,10 +9,10 @@ import (
 )
 
 type Storage struct {
-	db string
+	db database
 }
 
-func New(db string) *Storage {
+func New(db database) *Storage {
 	return &Storage{
 		db: db,
 	}
@@ -24,9 +20,20 @@ func New(db string) *Storage {
 
 // Search – поиск контактов, которые соответствуют запросу
 func (s *Storage) Search(request model.SearchRequest) ([]model.Contact, error) {
-	contactsDto, err := s.readFromJson()
+	contactsDto, err := s.db.Read()
 	if err != nil {
 		return nil, err
+	}
+
+	filtered := make(map[string]model.Contact)
+
+	if len(request.Query) == 0 {
+		// Для пустого поискового запроса возвращаем все контакты
+		for _, contactDto := range contactsDto {
+			filtered[contactDto.UUID] = dtoToModel(contactDto)
+		}
+
+		return maps.Values(filtered), nil
 	}
 
 	words := strings.Fields(request.Query)
@@ -34,19 +41,19 @@ func (s *Storage) Search(request model.SearchRequest) ([]model.Contact, error) {
 		words[i] = strings.ToLower(word)
 	}
 
-	contactsFiltered := make(map[string]model.Contact)
-
 	for _, contactDto := range contactsDto {
-		if slices.Contains(words, strings.ToLower(contactDto.Name)) || slices.Contains(words, strings.ToLower(contactDto.Surname)) {
-			contactsFiltered[contactDto.UUID] = dtoToModel(contactDto)
+		for _, word := range words {
+			if strings.Contains(strings.ToLower(contactDto.Name), word) || strings.Contains(strings.ToLower(contactDto.Surname), word) {
+				filtered[contactDto.UUID] = dtoToModel(contactDto)
+			}
 		}
 	}
 
-	return maps.Values(contactsFiltered), nil
+	return maps.Values(filtered), nil
 }
 
-func (s *Storage) FetchByUUID(uuid string) (model.Contact, error) {
-	contactsDto, err := s.readFromJson()
+func (s *Storage) FetchByUuid(uuid string) (model.Contact, error) {
+	contactsDto, err := s.db.Read()
 	if err != nil {
 		return model.Contact{}, err
 	}
@@ -64,7 +71,7 @@ func (s *Storage) FetchByUUID(uuid string) (model.Contact, error) {
 
 // Fetch – получить список всех контактов
 func (s *Storage) Fetch() ([]model.Contact, error) {
-	contactsDto, err := s.readFromJson()
+	contactsDto, err := s.db.Read()
 	if err != nil {
 		return nil, err
 	}
@@ -79,19 +86,19 @@ func (s *Storage) Fetch() ([]model.Contact, error) {
 
 // Delete - удалить контакт по id
 func (s *Storage) Delete(uuid string) error {
-	contactsDto, err := s.readFromJson()
+	contactsDto, err := s.db.Read()
 	if err != nil {
 		return err
 	}
 
 	delete(contactsDto, uuid)
 
-	return s.saveToJson(contactsDto)
+	return s.db.Save(contactsDto)
 }
 
 // Update – обновить контакт, находим контакт по id и перезаписываем его в хранилище
 func (s *Storage) Update(contact model.Contact) error {
-	contactsDto, err := s.readFromJson()
+	contactsDto, err := s.db.Read()
 	if err != nil {
 		return err
 	}
@@ -103,12 +110,12 @@ func (s *Storage) Update(contact model.Contact) error {
 
 	contactsDto[contact.UUID] = modelToDto(contact)
 
-	return s.saveToJson(contactsDto)
+	return s.db.Save(contactsDto)
 }
 
 // Create – создать контакт
 func (s *Storage) Create(contact model.Contact) error {
-	contactsDto, err := s.readFromJson()
+	contactsDto, err := s.db.Read()
 	if err != nil {
 		return err
 	}
@@ -120,36 +127,5 @@ func (s *Storage) Create(contact model.Contact) error {
 
 	contactsDto[contact.UUID] = modelToDto(contact)
 
-	return s.saveToJson(contactsDto)
-}
-
-// saveToJson – вспомогательный метод, который инкапсулирует запись в файл
-func (s *Storage) saveToJson(contacts map[string]Contact) error {
-	b, err := json.Marshal(contacts)
-	if err != nil {
-		return fmt.Errorf("marshall: %w", err)
-	}
-
-	err = os.WriteFile(s.db, b, 0644)
-	if err != nil {
-		return fmt.Errorf("write file: %w", err)
-	}
-
-	return nil
-}
-
-// readFromJson – вспомогательный метод, который инкапсулирует чтение из файла
-func (s *Storage) readFromJson() (map[string]Contact, error) {
-	b, err := os.ReadFile(s.db)
-	if err != nil {
-		return nil, fmt.Errorf("read file: %w", err)
-	}
-
-	var dto map[string]Contact
-	err = json.Unmarshal(b, &dto)
-	if err != nil {
-		return nil, fmt.Errorf("unmarshal: %w", err)
-	}
-
-	return dto, nil
+	return s.db.Save(contactsDto)
 }

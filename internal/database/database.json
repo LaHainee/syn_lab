@@ -1,1 +1,80 @@
-{"0acd27b9-6b8b-46f3-8a95-2924765a3401":{"uuid":"0acd27b9-6b8b-46f3-8a95-2924765a3401","surname":"Петров","name":"Максим","birthday":"2018-02-21T18:55:35Z","phone":79151596781,"email":"vaershov@avito.ru","links":{}},"0c46a73f-4ee7-416a-bb6a-75fe587a910a":{"uuid":"0c46a73f-4ee7-416a-bb6a-75fe587a910a","surname":"Сидоров","name":"Михаил","birthday":"2002-12-03T15:28:53Z","phone":79151596781,"email":"vaershov@avito.ru","links":{}},"311eec60-144b-4558-9799-2d44f81cb68a":{"uuid":"311eec60-144b-4558-9799-2d44f81cb68a","surname":"Зайцев","name":"Сергей","birthday":"1985-09-13T15:57:35Z","phone":79151596781,"email":"vaershov@avito.ru","links":{}},"41af50a5-f31a-43cb-9422-e0824487c188":{"uuid":"41af50a5-f31a-43cb-9422-e0824487c188","surname":"Васильев","name":"Владимир","birthday":"2009-11-26T02:56:25Z","phone":79151596781,"email":"vaershov@avito.ru","links":{}},"5ddab392-b429-4f3f-848a-4eed521f3436":{"uuid":"5ddab392-b429-4f3f-848a-4eed521f3436","surname":"Соловьев","name":"Никита","birthday":"2020-07-15T00:10:14Z","phone":79151596781,"email":"vaershov@avito.ru","links":{}},"62c098f1-209d-4d49-82b8-f1502a3f13cb":{"uuid":"62c098f1-209d-4d49-82b8-f1502a3f13cb","surname":"Жихарев","name":"Семен","birthday":"2001-01-10T00:00:00Z","phone":79151596781,"email":"vaershov@avito.ru","links":{}},"67498249-4742-4aa8-9691-1c94fce532d5":{"uuid":"67498249-4742-4aa8-9691-1c94fce532d5","surname":"Мавнилов","name":"Тест","birthday":"2001-01-10T00:00:00Z","phone":79151596781,"email":"vaershov@avito.ru","links":{}},"71d98d46-10f5-4d02-874c-7f7b01039274":{"uuid":"71d98d46-10f5-4d02-874c-7f7b01039274","surname":"Ершова","name":"Стася","birthday":"1999-01-23T00:00:00Z","phone":79165765731,"email":"aaershova@avito.ru","links":{"vk.com":"https://instagram.com/ex.stasay"}},"852ea1ba-9acc-4290-9c47-4cb6eb901c53":{"uuid":"852ea1ba-9acc-4290-9c47-4cb6eb901c53","surname":"Соловьев","name":"Егор","birthday":"1986-04-27T10:18:57Z","phone":79151596781,"email":"vaershov@avito.ru","links":{}},"a6e59673-f77e-407c-86c3-fd6c7caa1801":{"uuid":"a6e59673-f77e-407c-86c3-fd6c7caa1801","surname":"Иванов","name":"Владимир","birthday":"1988-01-04T01:06:10Z","phone":79151596781,"email":"vaershov@avito.ru","links":{}},"ad864387-e0dc-4fad-acc8-69da70c0a482":{"uuid":"ad864387-e0dc-4fad-acc8-69da70c0a482","surname":"Сидоров","name":"Артем","birthday":"2012-01-14T08:12:51Z","phone":79151596781,"email":"vaershov@avito.ru","links":{}},"b57d05a2-856c-4840-8842-af62165669cf":{"uuid":"b57d05a2-856c-4840-8842-af62165669cf","surname":"Ковалев","name":"Дмитрий","birthday":"2001-08-16T00:00:00Z","phone":79151596781,"email":"vaershov@avito.ru","links":{}},"c2344f85-027c-4425-9bbb-7bdd626571ee":{"uuid":"c2344f85-027c-4425-9bbb-7bdd626571ee","surname":"Макеев","name":"Игорь","birthday":"2001-01-17T00:00:00Z","phone":79151596881,"email":"vaershov@avito.ru","links":{"vk.com":"https://ya.ru"}},"f4f9a7df-cf5e-48ba-bf19-d0eee69f8232":{"uuid":"f4f9a7df-cf5e-48ba-bf19-d0eee69f8232","surname":"Ковалев","name":"Артем","birthday":"2011-11-08T03:19:39Z","phone":79151596781,"email":"vaershov@avito.ru","links":{}}}
+{
+  "172c19f4-42ac-4420-9954-4085df19a730": {
+    "uuid": "172c19f4-42ac-4420-9954-4085df19a730",
+    "surname": "Ершов",
+    "name": "Виталий",
+    "birthday": "2001-01-10T00:00:00Z",
+    "phone": 79151596781,
+    "email": "vaershov@avito.ru",
+    "links": {
+      "vk.com": "https://ya.ru"
+    }
+  },
+  "311eec60-144b-4558-9799-2d44f81cb68a": {
+    "uuid": "311eec60-144b-4558-9799-2d44f81cb68a",
+    "surname": "Зайцев",
+    "name": "Сергей",
+    "birthday": "1985-09-13T15:57:35Z",
+    "phone": 79151596781,
+    "email": "vaershov@avito.ru",
+    "links": {}
+  },
+  "41af50a5-f31a-43cb-9422-e0824487c188": {
+    "uuid": "41af50a5-f31a-43cb-9422-e0824487c188",
+    "surname": "Васильев",
+    "name": "Владимира",
+    "birthday": "2009-11-26T00:00:00Z",
+    "phone": 79151596781,
+    "email": "vaershov@avito.ru",
+    "links": {}
+  },
+  "62c098f1-209d-4d49-82b8-f1502a3f13cb": {
+    "uuid": "62c098f1-209d-4d49-82b8-f1502a3f13cb",
+    "surname": "Жихарев",
+    "name": "Семен",
+    "birthday": "2001-01-10T00:00:00Z",
+    "phone": 79151596781,
+    "email": "vaershov@avito.ru",
+    "links": {}
+  },
+  "71d98d46-10f5-4d02-874c-7f7b01039274": {
+    "uuid": "71d98d46-10f5-4d02-874c-7f7b01039274",
+    "surname": "Ершова",
+    "name": "Стася",
+    "birthday": "1999-01-23T00:00:00Z",
+    "phone": 79165765731,
+    "email": "aaershova@avito.ru",
+    "links": {
+      "vk.com": "https://instagram.com/ex.stasay"
+    }
+  },
+  "b57d05a2-856c-4840-8842-af62165669cf": {
+    "uuid": "b57d05a2-856c-4840-8842-af62165669cf",
+    "surname": "Ковалев",
+    "name": "Дмитрий",
+    "birthday": "2001-08-16T00:00:00Z",
+    "phone": 79151596781,
+    "email": "vaershov@avito.ru",
+    "links": {}
+  },
+  "c2344f85-027c-4425-9bbb-7bdd626571ee": {
+    "uuid": "c2344f85-027c-4425-9bbb-7bdd626571ee",
+    "surname": "Макеев",
+    "name": "Игорь",
+    "birthday": "2001-01-17T00:00:00Z",
+    "phone": 79151596881,
+    "email": "vaershov@avito.ru",
+    "links": {
+      "vk.com": "https://ya.ru"
+    }
+  },
+  "f4f9a7df-cf5e-48ba-bf19-d0eee69f8232": {
+    "uuid": "f4f9a7df-cf5e-48ba-bf19-d0eee69f8232",
+    "surname": "Ковалев",
+    "name": "Артем",
+    "birthday": "2011-11-08T03:19:39Z",
+    "phone": 79151596781,
+    "email": "vaershov@avito.ru",
+    "links": {}
+  }
+}

@@ -1,14 +1,16 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"time"
 
-	"github.com/google/uuid"
-
+	contactValidator "contacts/internal/domain/validate/contact"
+	createContact "contacts/internal/handler/create"
 	"contacts/internal/model"
 	"contacts/internal/storage"
+	"contacts/internal/storage/database"
 )
 
 const amount = 10
@@ -30,7 +32,7 @@ func getRandom[T any](items []T) T {
 	return items[rand.Intn(len(items))]
 }
 
-func generateRandomDate() time.Time {
+func generateRandomDate() string {
 	rand.Seed(time.Now().UnixNano())
 
 	start := time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -39,26 +41,27 @@ func generateRandomDate() time.Time {
 	randomUnix := rand.Int63n(end.Unix()-start.Unix()) + start.Unix()
 	randomDate := time.Unix(randomUnix, 0).UTC()
 
-	return randomDate
+	return randomDate.Format("02.01.2006")
 }
 
 func main() {
-	contactStorage := storage.New("internal/database/database.json")
+	contactStorage := storage.New(database.New("internal/database/database.json"))
+	validator := contactValidator.New()
+	createContactHandler := createContact.NewHandler(contactStorage, validator)
 
-	contacts := make([]model.Contact, 0)
+	contacts := make([]model.ContactForCreate, 0)
 	for i := 0; i < amount; i++ {
-		contacts = append(contacts, model.Contact{
-			UUID:     uuid.NewString(),
+		contacts = append(contacts, model.ContactForCreate{
 			Surname:  getRandom(surnames),
 			Name:     getRandom(names),
 			Birthday: generateRandomDate(),
-			Phone:    model.NewPhoneFromInt64(79151596781),
+			Phone:    "+7 (915) 159-67-81",
 			Email:    "vaershov@avito.ru",
 		})
 	}
 
 	for _, contact := range contacts {
-		err := contactStorage.Create(contact)
+		_, err := createContactHandler.Create(context.Background(), contact)
 		if err != nil {
 			panic(err)
 		}

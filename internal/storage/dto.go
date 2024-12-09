@@ -1,8 +1,9 @@
 package storage
 
 import (
-	"contacts/internal/model"
 	"time"
+
+	"contacts/internal/model"
 )
 
 type Contact struct {
