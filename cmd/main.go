@@ -1,127 +1,146 @@
 package main
 
 import (
-	"contacts/internal/model"
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/widget"
+
+	contactValidator "contacts/internal/domain/validate/contact"
+	"contacts/internal/handler/create"
+	"contacts/internal/handler/update"
 	"contacts/internal/storage"
-	"github.com/google/uuid"
-	"time"
+	"contacts/ui/menu"
+	widgetBirthday "contacts/ui/widget/birthday"
+	widgetContactsList "contacts/ui/widget/contacts_list"
+	windowAbout "contacts/ui/window/about"
+	windowCreateContact "contacts/ui/window/create_contact"
+	windowDeleteContact "contacts/ui/window/delete_contact"
+	windowUpdateContact "contacts/ui/window/update_contact"
 )
 
 var (
-	birthday = time.Date(2001, 1, 10, 0, 0, 0, 0, time.UTC)
-	email    = "fake@gmail.com"
-	links    = map[model.ContactLink]string{
-		model.ContactLinkVk: "vk.com/vaershov",
-	}
+	appWindowSize = fyne.NewSize(1920, 1080)
+	buttonSize    = fyne.NewSize(30, 30)
 )
 
 func main() {
-	phone, err := model.NewPhone("+7 (915) 159-67-81")
+	// Конфигурация приложения
+	contactStorage := storage.New("internal/database/database.json")
+
+	validator := contactValidator.New()
+
+	createContactHandler := create.NewHandler(contactStorage, validator)
+	updateContactHandler := update.NewHandler(contactStorage, validator)
+
+	// Создание нового приложения
+	myApp := app.New()
+	myApp.Quit()
+	myApp.Settings().SetTheme(theme.LightTheme())
+	myWindow := myApp.NewWindow("Contacts App")
+	myWindow.Resize(appWindowSize)
+	appBox := container.NewWithoutLayout()
+
+	contacts, err := contactStorage.Fetch()
 	if err != nil {
 		panic(err)
 	}
 
-	storageInstance := storage.New("internal/database/database.json")
-
-	err = create(storageInstance, phone)
+	// <! Иконки для кнопок
+	createContactIcon, err := fyne.LoadResourceFromPath("./ui/icons/plus.png")
 	if err != nil {
 		panic(err)
 	}
 
-	//err := update(storageInstance)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//
-	//err := deleteContact(storageInstance)
-	//if err != nil {
-	//	panic(err)
-	//}
+	editContactIcon, err := fyne.LoadResourceFromPath("./ui/icons/edit.png")
+	if err != nil {
+		panic(err)
+	}
 
-	//contacts, err := fetch(storageInstance)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//
-	//for _, contact := range contacts {
-	//	fmt.Println(contact)
-	//}
+	deleteContactIcon, err := fyne.LoadResourceFromPath("./ui/icons/minus.png")
+	if err != nil {
+		panic(err)
+	}
+	// Иконки для кнопок !>
 
-	//contacts, err := search(storageInstance, "виталий ершов")
-	//if err != nil {
-	//	panic(err)
-	//}
-	//
-	//for _, contact := range contacts {
-	//	fmt.Println(contact)
-	//}
-}
+	contactsListWidgetBuilder := widgetContactsList.NewBuilder(contacts, appBox)
+	contactsListWidgetBuilder.Build()
 
-func search(storageInstance *storage.Storage, query string) ([]model.Contact, error) {
-	return storageInstance.Search(model.SearchRequest{Query: query})
-}
+	contactListPos := contactsListWidgetBuilder.ContactListBoxPos()
+	contactListSize := contactsListWidgetBuilder.ContactListBoxSize()
 
-func fetch(storageInstance *storage.Storage) ([]model.Contact, error) {
-	return storageInstance.Fetch()
-}
+	const horizontalSpacingBetweenButtons = 5
 
-func deleteContact(storageInstance *storage.Storage) error {
-	return storageInstance.Delete("695bb135-63ab-4b2a-bf3c-82339d395e90")
-}
+	// Компонент отвечающий за создание контакта
+	createContactWindowBuilder := windowCreateContact.NewBuilder(myApp, contactsListWidgetBuilder, createContactHandler, contactStorage)
+	createContactButton := widget.NewButtonWithIcon("", createContactIcon, func() {
+		createContactWindow := createContactWindowBuilder.Build()
+		createContactWindow.Show()
+	})
+	createContactButton.Resize(buttonSize)
+	createContactButton.Move(fyne.NewPos(contactListPos.X, contactListPos.Y+contactListSize.Height+20))
 
-func update(storageInstance *storage.Storage, phone model.Phone) error {
-	return storageInstance.Update(
-		model.Contact{
-			UUID:     "695bb135-63ab-4b2a-bf3c-82339d395e90",
-			Surname:  "Обновленный",
-			Name:     "Семен",
-			Birthday: birthday,
-			Phone:    phone,
-			Email:    email,
-			Links:    links,
-		},
+	// Компонент отвечающий за изменение контакта
+	updateContactWindowBuilder := windowUpdateContact.NewBuilder(myApp, contactsListWidgetBuilder, updateContactHandler, contactStorage)
+	updateContactButton := widget.NewButtonWithIcon("", editContactIcon, func() {
+		selectedContactUUID := contactsListWidgetBuilder.SelectedContactUUID()
+		if selectedContactUUID == nil {
+			return
+		}
+
+		updateContactWindow := updateContactWindowBuilder.Build(*selectedContactUUID)
+		updateContactWindow.Show()
+	})
+	updateContactButton.Resize(buttonSize)
+	updateContactButton.Move(
+		fyne.NewPos(
+			createContactButton.Position().X+createContactButton.Size().Width+horizontalSpacingBetweenButtons,
+			createContactButton.Position().Y,
+		))
+
+	// Компонент отвечающий за удаление контакта
+	deleteContactWindowBuilder := windowDeleteContact.NewBuilder(myApp, contactStorage, contactsListWidgetBuilder)
+	deleteContactButton := widget.NewButtonWithIcon("", deleteContactIcon, func() {
+		selectedContactUUID := contactsListWidgetBuilder.SelectedContactUUID()
+		if selectedContactUUID == nil {
+			return
+		}
+
+		deleteContactWindow := deleteContactWindowBuilder.Build(*selectedContactUUID)
+		deleteContactWindow.Show()
+	})
+	deleteContactButton.Resize(buttonSize)
+	deleteContactButton.Move(
+		fyne.NewPos(
+			updateContactButton.Position().X+updateContactButton.Size().Width+horizontalSpacingBetweenButtons,
+			updateContactButton.Position().Y,
+		))
+
+	aboutWindowBuilder := windowAbout.NewBuilder(myApp)
+
+	// Виджет с напоминанием о днях рождения
+	birthdayWidgetBuilder := widgetBirthday.NewBuilder(appWindowSize)
+	birthdayWidget := birthdayWidgetBuilder.Build(contacts)
+	if birthdayWidget != nil {
+		birthdayWidget.Move(fyne.NewPos(contactListPos.X+contactListSize.Width+20, contactListPos.Y+contactListSize.Height-50))
+		appBox.Add(birthdayWidget)
+	}
+
+	appBox.Add(createContactButton)
+	appBox.Add(updateContactButton)
+	appBox.Add(deleteContactButton)
+	myWindow.SetContent(appBox)
+
+	mainMenuBuilder := menu.NewBuilder(
+		myApp,
+		contactsListWidgetBuilder,
+		createContactWindowBuilder,
+		updateContactWindowBuilder,
+		deleteContactWindowBuilder,
+		aboutWindowBuilder,
 	)
-}
+	myWindow.SetMainMenu(mainMenuBuilder.Build())
 
-func create(storageInstance *storage.Storage, phone model.Phone) error {
-	err := storageInstance.Create(model.Contact{
-		UUID:     uuid.NewString(),
-		Surname:  "Жихарев",
-		Name:     "Семен",
-		Birthday: birthday,
-		Phone:    phone,
-		Email:    email,
-		Links:    links,
-	})
-	if err != nil {
-		return err
-	}
-
-	err = storageInstance.Create(model.Contact{
-		UUID:     uuid.NewString(),
-		Surname:  "Ершов",
-		Name:     "Виталий",
-		Birthday: birthday,
-		Phone:    phone,
-		Email:    email,
-		Links:    links,
-	})
-	if err != nil {
-		return err
-	}
-
-	err = storageInstance.Create(model.Contact{
-		UUID:     uuid.NewString(),
-		Surname:  "Варин",
-		Name:     "Дмитрий",
-		Birthday: birthday,
-		Phone:    phone,
-		Email:    email,
-		Links:    links,
-	})
-	if err != nil {
-		return err
-	}
-
-	return nil
+	myWindow.ShowAndRun()
 }
