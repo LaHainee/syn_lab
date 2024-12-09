@@ -11,6 +11,7 @@ import (
 	"contacts/internal/model"
 	"contacts/internal/storage"
 	"contacts/internal/storage/database"
+	"contacts/util/uuid"
 )
 
 const amount = 10
@@ -47,7 +48,8 @@ func generateRandomDate() string {
 func main() {
 	contactStorage := storage.New(database.New("internal/database/database.json"))
 	validator := contactValidator.New()
-	createContactHandler := createContact.NewHandler(contactStorage, validator)
+	uuidGenerator := uuid.NewGenerator()
+	createContactHandler := createContact.NewHandler(contactStorage, uuidGenerator, validator)
 
 	contacts := make([]model.ContactForCreate, 0)
 	for i := 0; i < amount; i++ {

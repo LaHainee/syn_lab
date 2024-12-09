@@ -22,6 +22,7 @@ import (
 	windowCreateContact "contacts/ui/window/create_contact"
 	windowDeleteContact "contacts/ui/window/delete_contact"
 	windowUpdateContact "contacts/ui/window/update_contact"
+	"contacts/util/uuid"
 )
 
 var (
@@ -35,7 +36,9 @@ func main() {
 
 	validator := contactValidator.New()
 
-	createContactHandler := createContact.NewHandler(contactStorage, validator)
+	uuidGenerator := uuid.NewGenerator()
+
+	createContactHandler := createContact.NewHandler(contactStorage, uuidGenerator, validator)
 	updateContactHandler := updateContact.NewHandler(contactStorage, validator)
 	deleteContactHandler := deleteContact.NewHandler(contactStorage)
 	fetchContactHandler := fetchContact.NewHandler(contactStorage)
