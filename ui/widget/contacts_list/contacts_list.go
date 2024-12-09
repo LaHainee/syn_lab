@@ -15,6 +15,11 @@ import (
 	"contacts/util/pointer"
 )
 
+var (
+	contactListSize = fyne.NewSize(350, 500)
+	contactListPos  = fyne.NewPos(50, 100)
+)
+
 type Builder struct {
 	contacts []model.Contact
 
@@ -35,6 +40,14 @@ func NewBuilder(contacts []model.Contact, appBox *fyne.Container) *Builder {
 		contacts: contacts,
 		appBox:   appBox,
 	}
+}
+
+func (b *Builder) ContactListBoxSize() fyne.Size {
+	return contactListSize
+}
+
+func (b *Builder) ContactListBoxPos() fyne.Position {
+	return contactListPos
 }
 
 func (b *Builder) Build() {
@@ -127,10 +140,9 @@ func (b *Builder) Build() {
 		b.contactInfoBox = contactInfoWidget.Box
 		b.appBox.Add(b.contactInfoBox)
 	}
-
 	b.contactsListBox = container.NewVScroll(contactsList)
-	b.contactsListBox.Resize(fyne.NewSize(350, 500))
-	b.contactsListBox.Move(fyne.NewPos(50, 100))
+	b.contactsListBox.Resize(contactListSize)
+	b.contactsListBox.Move(contactListPos)
 
 	b.appBox.Add(b.contactsListBox)
 

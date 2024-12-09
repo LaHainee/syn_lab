@@ -1,9 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"strconv"
-
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
@@ -13,17 +10,19 @@ import (
 	contactValidator "contacts/internal/domain/validate/contact"
 	"contacts/internal/handler/create"
 	"contacts/internal/handler/update"
-	"contacts/internal/model"
 	"contacts/internal/storage"
+	"contacts/ui/menu"
+	widgetBirthday "contacts/ui/widget/birthday"
 	widgetContactsList "contacts/ui/widget/contacts_list"
-	widgetCreateContact "contacts/ui/widget/create_contact"
-	widgetDeleteContact "contacts/ui/widget/delete_contact"
-	widgetUpdateContact "contacts/ui/widget/update_contact"
+	windowAbout "contacts/ui/window/about"
+	windowCreateContact "contacts/ui/window/create_contact"
+	windowDeleteContact "contacts/ui/window/delete_contact"
+	windowUpdateContact "contacts/ui/window/update_contact"
 )
 
-const (
-	windowWidth  = 1920
-	windowHeight = 1080
+var (
+	appWindowSize = fyne.NewSize(1920, 1080)
+	buttonSize    = fyne.NewSize(30, 30)
 )
 
 func main() {
@@ -37,9 +36,10 @@ func main() {
 
 	// Создание нового приложения
 	myApp := app.New()
+	myApp.Quit()
 	myApp.Settings().SetTheme(theme.LightTheme())
 	myWindow := myApp.NewWindow("Contacts App")
-	myWindow.Resize(fyne.NewSize(windowWidth, windowHeight))
+	myWindow.Resize(appWindowSize)
 	appBox := container.NewWithoutLayout()
 
 	contacts, err := contactStorage.Fetch()
@@ -67,17 +67,22 @@ func main() {
 	contactsListWidgetBuilder := widgetContactsList.NewBuilder(contacts, appBox)
 	contactsListWidgetBuilder.Build()
 
+	contactListPos := contactsListWidgetBuilder.ContactListBoxPos()
+	contactListSize := contactsListWidgetBuilder.ContactListBoxSize()
+
+	const horizontalSpacingBetweenButtons = 5
+
 	// Компонент отвечающий за создание контакта
-	createContactWindowBuilder := widgetCreateContact.NewBuilder(myApp, contactsListWidgetBuilder, createContactHandler, contactStorage)
+	createContactWindowBuilder := windowCreateContact.NewBuilder(myApp, contactsListWidgetBuilder, createContactHandler, contactStorage)
 	createContactButton := widget.NewButtonWithIcon("", createContactIcon, func() {
 		createContactWindow := createContactWindowBuilder.Build()
 		createContactWindow.Show()
 	})
-	createContactButton.Resize(fyne.NewSize(30, 30))
-	createContactButton.Move(fyne.NewPos(50, 800))
+	createContactButton.Resize(buttonSize)
+	createContactButton.Move(fyne.NewPos(contactListPos.X, contactListPos.Y+contactListSize.Height+20))
 
 	// Компонент отвечающий за изменение контакта
-	updateContactWindowBuilder := widgetUpdateContact.NewBuilder(myApp, contactsListWidgetBuilder, updateContactHandler, contactStorage)
+	updateContactWindowBuilder := windowUpdateContact.NewBuilder(myApp, contactsListWidgetBuilder, updateContactHandler, contactStorage)
 	updateContactButton := widget.NewButtonWithIcon("", editContactIcon, func() {
 		selectedContactUUID := contactsListWidgetBuilder.SelectedContactUUID()
 		if selectedContactUUID == nil {
@@ -87,11 +92,15 @@ func main() {
 		updateContactWindow := updateContactWindowBuilder.Build(*selectedContactUUID)
 		updateContactWindow.Show()
 	})
-	updateContactButton.Resize(fyne.NewSize(30, 30))
-	updateContactButton.Move(fyne.NewPos(85, 800))
+	updateContactButton.Resize(buttonSize)
+	updateContactButton.Move(
+		fyne.NewPos(
+			createContactButton.Position().X+createContactButton.Size().Width+horizontalSpacingBetweenButtons,
+			createContactButton.Position().Y,
+		))
 
 	// Компонент отвечающий за удаление контакта
-	deleteContactWindowBuilder := widgetDeleteContact.NewBuilder(myApp, contactStorage, contactsListWidgetBuilder)
+	deleteContactWindowBuilder := windowDeleteContact.NewBuilder(myApp, contactStorage, contactsListWidgetBuilder)
 	deleteContactButton := widget.NewButtonWithIcon("", deleteContactIcon, func() {
 		selectedContactUUID := contactsListWidgetBuilder.SelectedContactUUID()
 		if selectedContactUUID == nil {
@@ -101,69 +110,37 @@ func main() {
 		deleteContactWindow := deleteContactWindowBuilder.Build(*selectedContactUUID)
 		deleteContactWindow.Show()
 	})
-	deleteContactButton.Resize(fyne.NewSize(30, 30))
-	deleteContactButton.Move(fyne.NewPos(120, 800))
+	deleteContactButton.Resize(buttonSize)
+	deleteContactButton.Move(
+		fyne.NewPos(
+			updateContactButton.Position().X+updateContactButton.Size().Width+horizontalSpacingBetweenButtons,
+			updateContactButton.Position().Y,
+		))
+
+	aboutWindowBuilder := windowAbout.NewBuilder(myApp)
+
+	// Виджет с напоминанием о днях рождения
+	birthdayWidgetBuilder := widgetBirthday.NewBuilder(appWindowSize)
+	birthdayWidget := birthdayWidgetBuilder.Build(contacts)
+	if birthdayWidget != nil {
+		birthdayWidget.Move(fyne.NewPos(contactListPos.X+contactListSize.Width+20, contactListPos.Y+contactListSize.Height-50))
+		appBox.Add(birthdayWidget)
+	}
 
 	appBox.Add(createContactButton)
 	appBox.Add(updateContactButton)
 	appBox.Add(deleteContactButton)
-
 	myWindow.SetContent(appBox)
 
-	// Показать окно и запустить приложение
-	myWindow.ShowAndRun()
-}
-
-type contactInfo struct {
-	Label string
-	Value string
-}
-
-type createContactField struct {
-	Label     *widget.Label
-	Entry     *widget.Entry
-	ApplyFunc func(contact *model.Contact)
-}
-
-func prepareContactsInfo(infos []contactInfo, posByY, offsetByY, labelPosByX, entryPosByX float32) *fyne.Container {
-	box := container.NewWithoutLayout()
-
-	for _, info := range infos {
-		label := widget.NewLabel(info.Label + ":")
-		label.Alignment = fyne.TextAlignTrailing
-
-		labelBox := container.NewVBox(label)
-		labelBox.Resize(fyne.NewSize(200, 30))
-		labelBox.Move(fyne.NewPos(labelPosByX, posByY))
-
-		entry := widget.NewEntry()
-		entry.SetText(info.Value)
-		entryBox := container.NewVBox(entry)
-		entryBox.Resize(fyne.NewSize(200, 30))
-		entryBox.Move(fyne.NewPos(entryPosByX, posByY))
-
-		box.Add(labelBox)
-		box.Add(entryBox)
-
-		posByY += offsetByY
-	}
-
-	return box
-}
-
-func formatPhoneNumber(phone int64) string {
-	phoneStr := strconv.FormatInt(phone, 10)
-
-	if len(phoneStr) != 11 {
-		return "Неверный номер телефона"
-	}
-
-	formatted := fmt.Sprintf("+7 (%s) %s-%s-%s",
-		phoneStr[1:4],  // 915
-		phoneStr[4:7],  // 159
-		phoneStr[7:9],  // 67
-		phoneStr[9:11], // 81
+	mainMenuBuilder := menu.NewBuilder(
+		myApp,
+		contactsListWidgetBuilder,
+		createContactWindowBuilder,
+		updateContactWindowBuilder,
+		deleteContactWindowBuilder,
+		aboutWindowBuilder,
 	)
+	myWindow.SetMainMenu(mainMenuBuilder.Build())
 
-	return formatted
+	myWindow.ShowAndRun()
 }

@@ -42,6 +42,7 @@ func (b *Builder) Build(contactUuid string) fyne.Window {
 	window := b.app.NewWindow("Delete contact")
 	window.Resize(windowSize)
 	window.SetFixedSize(true)
+	window.CenterOnScreen()
 
 	label := widget.NewLabel(fmt.Sprintf("Удалить контакт %s %s?", contact.Name, contact.Surname))
 
@@ -85,7 +86,6 @@ func (b *Builder) Build(contactUuid string) fyne.Window {
 	box.Add(confirmButton)
 
 	window.SetContent(box)
-	window.CenterOnScreen()
 
 	return window
 }
