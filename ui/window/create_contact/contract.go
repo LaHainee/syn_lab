@@ -3,13 +3,19 @@ package create_contact
 import (
 	"context"
 
+	"fyne.io/fyne/v2"
+
 	"contacts/internal/model"
 )
 
-type handler interface {
-	Create(_ context.Context, contact model.ContactForCreate) (map[model.Field]string, error)
+type app interface {
+	NewWindow(title string) fyne.Window
 }
 
-type storage interface {
-	Fetch() ([]model.Contact, error)
+type contactList interface {
+	Refresh()
+}
+
+type createHandler interface {
+	Create(ctx context.Context, contact model.ContactForCreate) (map[model.Field]string, error)
 }

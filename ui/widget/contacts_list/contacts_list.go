@@ -1,8 +1,8 @@
 package contacts_list
 
 import (
+	"context"
 	"sort"
-	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -21,24 +21,23 @@ var (
 )
 
 type Builder struct {
-	contacts []model.Contact
+	fetchHandler  fetchHandler
+	searchHandler searchHandler
+	appBox        appBox
 
-	// Ссылка на контейнер всего приложения
-	appBox *fyne.Container
-
+	// Для хранения стейта
 	contactInfoBox  *fyne.Container
 	contactsListBox *container.Scroll
 	searchInputBox  *fyne.Container
 	searchLabelBox  *fyne.Container
-
-	// Выбранный в данный момент контакте
 	selectedContact *model.Contact
 }
 
-func NewBuilder(contacts []model.Contact, appBox *fyne.Container) *Builder {
+func NewBuilder(fetchHandler fetchHandler, searchHandler searchHandler, appBox appBox) *Builder {
 	return &Builder{
-		contacts: contacts,
-		appBox:   appBox,
+		appBox:        appBox,
+		fetchHandler:  fetchHandler,
+		searchHandler: searchHandler,
 	}
 }
 
@@ -51,7 +50,10 @@ func (b *Builder) ContactListBoxPos() fyne.Position {
 }
 
 func (b *Builder) Build() {
-	filtered := b.contacts
+	filtered, err := b.fetchHandler.Fetch(context.Background())
+	if err != nil {
+		panic(err)
+	}
 
 	sort.Sort(BySurname(filtered))
 
@@ -153,19 +155,19 @@ func (b *Builder) Build() {
 	// Поисковая строка
 	searchInput := widget.NewEntry()
 
+	// Обработка ввода в поисковой строке
 	searchInput.OnChanged = func(text string) {
-		filtered = []model.Contact{}
-
-		for _, contact := range b.contacts {
-			if strings.Contains(strings.ToLower(contact.Surname), strings.ToLower(text)) {
-				filtered = append(filtered, contact)
-			}
+		filtered, err = b.searchHandler.Search(context.Background(), model.SearchRequest{
+			Query: text,
+		})
+		if err != nil {
+			panic(err)
 		}
+
+		sort.Sort(BySurname(filtered))
 
 		contactsList.Refresh()
 	}
-
-	sort.Sort(BySurname(filtered))
 
 	searchInputBox := container.NewVBox(searchInput)
 	searchInputBox.Resize(fyne.NewSize(300, 40))
@@ -193,14 +195,12 @@ func (b *Builder) SelectedContactUUID() *string {
 	return &b.selectedContact.UUID
 }
 
-func (b *Builder) Refresh(contacts []model.Contact) {
-	b.contacts = contacts
+func (b *Builder) Refresh() {
+	defer b.appBox.Refresh()
 
 	// Удаляем предыдущее наполнение
 	b.appBox.Remove(b.contactsListBox)
 	b.appBox.Remove(b.contactInfoBox)
 
 	b.Build()
-
-	b.appBox.Refresh()
 }

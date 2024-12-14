@@ -1,14 +1,12 @@
 package delete_contact
 
 import (
+	"context"
 	"fmt"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
-
-	"contacts/internal/storage"
-	contactsList "contacts/ui/widget/contacts_list"
 )
 
 var (
@@ -17,24 +15,28 @@ var (
 )
 
 type Builder struct {
-	// Объект приложения
-	app fyne.App
-
-	storage *storage.Storage
-
-	contactListBuilder *contactsList.Builder
+	app           app
+	deleteHandler deleteHandler
+	fetchHandler  fetchHandler
+	contactList   contactList
 }
 
-func NewBuilder(app fyne.App, storage *storage.Storage, contactsListBuilder *contactsList.Builder) *Builder {
+func NewBuilder(
+	app app,
+	deleteHandler deleteHandler,
+	fetchHandler fetchHandler,
+	contactList contactList,
+) *Builder {
 	return &Builder{
-		app:                app,
-		storage:            storage,
-		contactListBuilder: contactsListBuilder,
+		app:           app,
+		deleteHandler: deleteHandler,
+		fetchHandler:  fetchHandler,
+		contactList:   contactList,
 	}
 }
 
 func (b *Builder) Build(contactUuid string) fyne.Window {
-	contact, err := b.storage.FetchByUUID(contactUuid)
+	contact, err := b.fetchHandler.FetchByUuid(context.Background(), contactUuid)
 	if err != nil {
 		panic(err)
 	}
@@ -58,17 +60,12 @@ func (b *Builder) Build(contactUuid string) fyne.Window {
 	)
 
 	confirmButton := widget.NewButton("OK", func() {
-		err = b.storage.Delete(contactUuid)
+		err = b.deleteHandler.Delete(context.Background(), contactUuid)
 		if err != nil {
 			panic(err)
 		}
 
-		contacts, err := b.storage.Fetch()
-		if err != nil {
-			panic(err)
-		}
-
-		b.contactListBuilder.Refresh(contacts)
+		b.contactList.Refresh()
 
 		window.Close()
 	})

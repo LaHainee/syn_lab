@@ -5,19 +5,19 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
-
 	"contacts/internal/model"
 )
 
 type Handler struct {
 	storage   storage
+	uuid      uuid
 	validator validator
 }
 
-func NewHandler(s storage, v validator) *Handler {
+func NewHandler(s storage, uuid uuid, v validator) *Handler {
 	return &Handler{
 		storage:   s,
+		uuid:      uuid,
 		validator: v,
 	}
 }
@@ -40,7 +40,7 @@ func (h *Handler) Create(_ context.Context, contactForCreate model.ContactForCre
 	}
 
 	contact := model.Contact{
-		UUID:     uuid.NewString(),
+		UUID:     h.uuid.NewString(),
 		Surname:  contactForCreate.Surname,
 		Name:     contactForCreate.Name,
 		Birthday: birthday,
